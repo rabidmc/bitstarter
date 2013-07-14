@@ -10,8 +10,22 @@ var URL_DEFAULT = "http://powerful-savannah-7987.herokuapp.com/";
 // var url = "http://powerful-savannah-7987.herokuapp.com/";
 // var checksfile = "checks.json";
 
+var assertFileExists = function(infile) {
+    var instr = infile.toString();
+    if(!fs.existsSync(instr)) {
+        console.log("%s does not exist. Exiting.", instr);
+        process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
+    }
+    return instr;
+};
 
-rest.get(url).on('complete', function(result) {
+var clone = function(fn) {
+    // Workaround for commander.js issue.
+    // http://stackoverflow.com/a/6772648
+    return fn.bind({});
+};
+
+var getTheURL = rest.get(url).on('complete', function(result) {
   if (result instanceof Error) {
     sys.puts('Error: ' + result.message);
     this.retry(5000); // try again after 5 sec
@@ -35,20 +49,20 @@ rest.get(url).on('complete', function(result) {
 	}
 	return out;
     }
-      if(require.main == module) {
-	program
-	.option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-	.option('-u, --url <url>', 'URL for HTML')
-	.parse(process.argv);
-	  var checkJson = checkHtmlFile(program.url, program.checks);
-	  var outJson = JSON.stringify(checkJson, null, 4);
-      sys.puts(outJson);
-	  } else {
-	      exports.checkHtmlFile = checkHtmlFile;
-	  }
      
   
 }
 });
 
+if(require.main == module) {
+    program
+	.option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+	.option('-u, --url <url>', 'URL for HTML', clone(getTheURL), URL_DEFAULT)
+	.parse(process.argv);
+    var checkJson = checkHtmlFile(program.url, program.checks);
+    var outJson = JSON.stringify(checkJson, null, 4);
+    sys.puts(outJson);
+} else { 
+exports.checkHtmlFile = checkHtmlFile
+}
  
